@@ -30,9 +30,9 @@ def with_git(repo):
     repo_name = repo["name"]
     repo_pull_url = repo["ssh_url"]
     if not os.path.exists(repo_name):
-        subprocess.call(["git", "clone", repo_pull_url])
+        subprocess.call(["git", "clone", "--recursive", repo_pull_url])
     else:
-        subprocess.call(["git", "-C", repo_name, "pull"])
+        subprocess.call(["git", "-C", repo_name, "pull", "--recurse-submodules"])
 
 
 def download_repositories(username, token, git_check):
