@@ -6,6 +6,8 @@ CLI for downloading all repositories from a specified user.
 
 `requests` is used to get information from the Github API and download the repositories (if you don't use -g/--git to download using git).
 
+Note that `requests` will not download submodules but git will.
+
 If you want to build this on your own, you can install the requirements with
 
 ```Python
