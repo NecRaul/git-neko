@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = "1.17"
+VERSION = "1.18"
 DESCRIPTION = "CLI for downloading all repositories from a specified user."
 with open("README.md", "r") as file:
     LONG_DESCRIPTION = file.read()
