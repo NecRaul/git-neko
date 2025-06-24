@@ -20,7 +20,8 @@ def main():
         "--token",
         type=str,
         metavar="Token",
-        help="Github public access token if you want to also download private repositories.",
+        help="Github public access token if you want to also download private "
+        "repositories.",
     )
     parser.add_argument(
         "-e",
@@ -32,7 +33,9 @@ def main():
         "-g",
         "--git",
         action="store_true",
-        help="Whether to download with git or not. False by default since it's dependent on whether or not git is downloaded (and your ssh/gpg key). IF YOU TYPE ANYTHING IN AFTER -g/--git IT WILL BE ACCEPTED AS TRUE.",
+        help="Whether to download with git or not. False by default since it's "
+        "dependent on whether or not git is downloaded (and your ssh/gpg key). IF YOU "
+        "TYPE ANYTHING IN AFTER -g/--git IT WILL BE ACCEPTED AS TRUE.",
     )
     parser.add_argument(
         "-gu",
