@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "git_neko"
+version = "1.21"
+description = "CLI for downloading all repositories from a specified user."
+readme = "README.md"
+authors = [
+    { name = "NecRaul", email = "necraul@kuroneko.dev" }
+]
+license = "LGPL-2.0"
+license-files = ["LICENSE"]
+keywords = [
+    "python",
+    "repository downloader",
+    "downloader",
+    "repository",
+    "git-neko",
+    "kuroneko"
+]
+dependencies = [
+    "requests>=2.31.0"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Internet :: WWW/HTTP",
+]
+
+[project.urls]
+Homepage = "https://github.com/NecRaul/git-neko"
+Documentation = "https://github.com/NecRaul/git-neko#readme"
+Repository = "https://github.com/NecRaul/git-neko"
+Issues = "https://github.com/NecRaul/git-neko/issues"
+
+[project.scripts]
+git-neko = "git_neko:main"
+
+[tool.setuptools]
+py-modules = ["download", "environment"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.black]
+line-length = 88
+exclude = '''
+(
+    \.git
+  | \.venv
+  | build
+  | dist
+  | .*\.egg-info
+)
+'''
