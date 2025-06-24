@@ -10,7 +10,7 @@ readme = "README.md"
 authors = [
     { name = "NecRaul", email = "necraul@kuroneko.dev" }
 ]
-license = "LGPL-2.0"
+license = "LGPL-2.1-only"
 license-files = ["LICENSE"]
 keywords = [
     "python",
