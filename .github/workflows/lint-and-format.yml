@@ -13,7 +13,6 @@ permissions:
 
 jobs:
   lint-and-format:
-    name: Check linting with flake8 and formatting with black
     runs-on: ubuntu-latest
 
     steps:

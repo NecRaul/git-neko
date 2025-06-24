@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   lint-and-format:
-    name: Check linting with flake8 and formatting with black
     runs-on: ubuntu-latest
 
     steps:
@@ -34,7 +33,6 @@ jobs:
         run: black --check .
 
   publish:
-    name: Upload package
     needs: lint-and-format
     runs-on: ubuntu-latest
 
