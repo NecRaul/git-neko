@@ -3,7 +3,6 @@ import os
 import subprocess
 import shutil
 import tarfile
-import zipfile
 
 
 def with_request(repo, headers):
@@ -35,22 +34,39 @@ def with_git(repo):
         subprocess.call(["git", "-C", repo_name, "pull", "--recurse-submodules"])
 
 
+def get_all_repos(username, token, headers):
+    repos = []
+    page = 1
+
+    while True:
+        page_query = f"?per_page=100&page={page}"
+        if not token:
+            API_ENDPOINT = f"https://api.github.com/users/{username}/repos{page_query}"
+        else:
+            API_ENDPOINT = f"https://api.github.com/user/repos{page_query}"
+
+        response = requests.get(API_ENDPOINT, headers=headers)
+
+        if response.status_code != 200:
+            print(response.status_code, response.text)
+            break
+
+        page_repos = response.json()
+
+        if not page_repos:
+            break
+
+        repos.extend(page_repos)
+        page += 1
+
+    return repos
+
+
 def download_repositories(username, token, git_check):
-    if not token:
-        API_ENDPOINT = f"https://api.github.com/users/{username}/repos"
-        headers = None
-    else:
-        API_ENDPOINT = f"https://api.github.com/user/repos"
-        headers = {
-            "Authorization": f"token {token}",
-        }
+    headers = {"Authorization": f"token {token}"} if token else None
+    repos = get_all_repos(username, token, headers)
 
-    response = requests.get(API_ENDPOINT, headers=headers)
-
-    if response.status_code == 200:
-        for repo in response.json():
-            if not username in repo["full_name"]:
-                continue
-            with_request(repo, headers) if not git_check else with_git(repo)
-    else:
-        print(response.status_code, response.text)
+    for repo in repos:
+        if not username in repo["full_name"]:
+            continue
+        with_request(repo, headers) if not git_check else with_git(repo)
