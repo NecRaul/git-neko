@@ -35,6 +35,11 @@ jobs:
   publish:
     needs: lint-and-format
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/git-neko/
+    permissions:
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -55,6 +60,3 @@ jobs:
 
       - name: Publish package
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
