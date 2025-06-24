@@ -5,7 +5,7 @@ DESCRIPTION = "CLI for downloading all repositories from a specified user."
 with open("README.md", "r") as file:
     LONG_DESCRIPTION = file.read()
 AUTHOR = "NecRaul"
-AUTHOR_EMAIL = "necraul2001@gmail.com"
+AUTHOR_EMAIL = "necraul@kuroneko.com"
 
 setup(
     name="git_neko",
