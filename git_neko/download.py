@@ -33,6 +33,7 @@ def download_with_git(repos):
         if not os.path.exists(repo_name):
             subprocess.call(["git", "clone", "--recursive", repo_pull_url])
         else:
+            print(f"Pulling '{repo_name}'...")
             subprocess.call(["git", "-C", repo_name, "pull", "--recurse-submodules"])
 
 
