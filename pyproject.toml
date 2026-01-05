@@ -7,9 +7,7 @@ name = "git_neko"
 version = "1.25"
 description = "CLI for downloading all repositories from a specified user."
 readme = "README.md"
-authors = [
-    { name = "NecRaul", email = "necraul@kuroneko.dev" }
-]
+authors = [{ name = "NecRaul", email = "necraul@kuroneko.dev" }]
 license = "LGPL-2.1-only"
 license-files = ["LICENSE"]
 keywords = [
@@ -18,11 +16,9 @@ keywords = [
     "downloader",
     "repository",
     "git-neko",
-    "kuroneko"
+    "kuroneko",
 ]
-dependencies = [
-    "requests>=2.31.0"
-]
+dependencies = ["requests"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
