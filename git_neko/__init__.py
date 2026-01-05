@@ -1,7 +1,8 @@
-from .download import download_repositories
-from .environment import set_environment_variable
 import argparse
 import os
+
+from .download import download_repositories
+from .environment import set_environment_variable
 
 
 def main():

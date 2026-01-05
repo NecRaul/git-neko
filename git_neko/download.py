@@ -1,8 +1,9 @@
-import requests
 import os
-import subprocess
 import shutil
+import subprocess
 import tarfile
+
+import requests
 
 
 def download_with_requests(repos, headers):
