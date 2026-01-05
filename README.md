@@ -2,148 +2,115 @@
 
 CLI for downloading all repositories from a specified user.
 
-## Requirements
+## Installation
 
-`requests` is used to get information from the Github API and download the repositories (if you don't use -g/--git to download using git).
+### Via PyPI (Recommended)
 
-Note that `requests` will not download submodules but git will.
-
-If you want to build this on your own, you can install the requirements with
-
-```Python
-pip install -r requirements.txt
-```
-
-or install the package by running
-
-```Python
+```sh
 pip install git-neko
 ```
 
-Python's native `os` (used to check for whether a folder exists or not), `argparse` (parse return request and set command argument), `subprocess` (call `git clone` and `git pull` on repositories) and `setuptools` (used to build the script) packages are also used.
+### From Source (Development)
+
+```sh
+git clone git@github.com:NecRaul/git-neko.git
+cd git-neko
+# You can skip the next two commands
+# for installing it globally
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .[dev,build]
+```
+
+## Usage
+
+`git-neko` acts as a sync tool. If a repo folder doesn't exist, it clones it, if it does, it updates it.
+
+```sh
+# Download/Sync public repositories with `requests`
+git-neko -u <github-username>
+
+# Download/Sync public and private repositories with `requests` (using a token)
+git-neko -u <github-username> -t <github-personal-access-token>
+
+# Use 'git clone/pull' instead of 'requests' (preserves history, branches and submodules)
+git-neko -u <github-username> -g
+
+# Use 'git' with a token for private repository syncing
+git-neko -u <github-username> -t <github-personal-access-token> -g
+```
+
+### Environment Variables
+
+You can save your credentials to environment variables to avoid passing them manually in every command.
+
+```sh
+# Set your credentials as environment variables
+git-neko -gu <github-username> -gpat <github-personal-access-token>
+
+# Run using the stored environment variables
+git-neko -e
+
+# Run using environment variables with the git engine
+git-neko -e -g
+```
+
+> [!WARNING]
+> The `-gu` and `-gpat` flags for setting environment variables only work on Windows.
+>
+> It is recommended to set `$GITHUB_USERNAME` and `$GITHUB_PERSONAL_ACCESS_TOKEN` variables in your shell profile.
+
+### Options
+
+```sh
+-u, --username      USERNAME    GitHub username to download repositories from
+-t, --token         TOKEN       GitHub personal access token (required for private repositories)
+-e, --environment   -           Use stored environment variables for username and token
+-g, --git           -           Use git engine instead of requests (handles history/branches/submodules)
+-gu, --gusername    USERNAME    Save the GitHub username to your environment variables
+-gpat, --gpat       TOKEN       Save the GitHub token to your environment variables
+```
+
+> [!TIP]
+> The `-e` and `-g` flags are a boolean toggle.
+
+## Dependencies
+
+* [requests](https://github.com/psf/requests): fetch data from the GitHub API and handle downloads.
 
 ## How it works
 
-I send requests to `https://api.github.com/users/{username}/repos` or `https://api.github.com/user/repos`, depending on the arguments passed to the script, I either download all the repositories in specified user's account with either `requests` or `git`.
+The tool determines the appropriate GitHub API endpoint based on your input: it queries `https://api.github.com/users/{username}/repos` for public profiles or `https://api.github.com/user/repos` when a token is provided to include private data.
 
-You can run the script with
+Once the repo list is retrieved, `git-neko` automates the synchronization process using one of two engines:
 
-```Python
-git-neko
-    -u <github-username>
-    -t <github-personal-access-token> (optional - you will just download the public repositories instead of all repositories)
-    -e (optional - means you will be using environment variables. This overrides -u and -t)
-    -g (optional - means you will be downloading using git)
-    -gu <github-username> (this will set <github-username> as environment variable)
-    -gpat <github-personal-access-token> (this will set <github-personal-access-token> as environment variable)
+* Requests Engine (Default): Fetches the repo as a compressed snapshot. This is fast but does not include **history**, **branches** or **submodules**.
+* Git Engine (via `-g` or `--git` flag): Uses your local **git** installation to perform a full **clone** or **pull** This preserves the complete **history**, **branches** and **submodules**.
+
+### The Manual Way
+
+Without this tool, you would need to manually parse JSON responses, manage authentication headers, and write logic to differentiate between new clones and existing updates:
+
+```sh
+# A simplified version of the logic git-neko automates
+# It fetches the name and ssh_url, then loops through them
+curl -s -H "Authorization: token $GITHUB_PERSONAL_ACCESS_TOKEN" https://api.github.com/user/repos |
+    jq -r '.[] | "\(.name) \(.ssh_url)"' | while read -r name ssh_url; do
+    if [ ! -d "$name" ]; then
+        git clone --recursive "$ssh_url" "$name"
+    else
+        echo "Pulling '$name'..."
+        git -C "$name" pull --recurse-submodules
+    fi
+done
 ```
 
-### Examples
+### The git-neko way
 
-#### Setting Environment Variables
-
-This will set the specified **Github username** and **personal access token** as your `GITHUB_USERNAME` and `GITHUB_PERSONAL_ACCESS_TOKEN` environment variable respectively. On Linux this is a bit buggy.
-
-```Python
-git-neko -gu <github-username> -gpat <github-personal-access-token>
-```
-
-This will set the specified **Github username** as your `GITHUB_USERNAME` environment variable. On Linux this is a bit buggy.
-
-```Python
-git-neko -gu <github-username>
-```
-
-This will set the specified **personal access token** as your `GITHUB_PERSONAL_ACCESS_TOKEN` environment variable. On Linux this is a bit buggy.
-
-```Python
-git-neko -gpat <github-personal-access-token>
-```
-
-#### Public Repositories without Environment Variables
-
-This will use the specified **Github username** and download all **public repositories** using `requests`.
-
-```Python
-git-neko -u <github-username> -t <github-personal-access-token>
-```
-
-This will use the specified **Github username** and download all **public repositories** using `git`.
-
-```Python
-git-neko -u <github-username> -t <github-personal-access-token> -g <anything>
-```
-
-#### Public and Private Repositories without Environment Variables
-
-This will use the specified **Github username** and **personal access token** and download all **public and private repositories** using `requests`.
-
-```Python
-git-neko -u <github-username> -t <github-personal-access-token>
-```
-
-This will use the specified **Github username** and **personal access token** and download all **public and private repositories** using `git`.
-
-```Python
-git-neko -u <github-username> -t <github-personal-access-token> -g <anything>
-```
-
-#### Public and Private Repositories with Environment Variables
-
-This will use the **Github username** and **personal access token** in the **environment variables** and download all **public and private repositories** using `requests`.
-
-```Python
-git-neko -e <anything>
-```
-
-This will use the **Github username** and **personal access token** in the **environment variables** and download all **public and private repositories** using `git`.
-
-```Python
-git-neko -e <anything> -g <anything>
-```
-
-#### Public and Private Repositories with Environment Variables (Overriding passed Username and Personal Access Token)
-
-This will **ignore** the passed **Github username** and **personal access token** instead using **environment variables** and download all **public and private repositories** using `requests`.
-
-```Python
-git-neko -u <github-username> -t <github-personal-access-token> -e <anything>
-```
-
-This will **ignore** the passed **Github username** and **personal access token** instead using **environment variables** and download all **public and private repositories** using `git`.
-
-```Python
-git-neko -u <github-username> -t <github-personal-access-token> -e <anything> -g <anything>
-```
-
-### Simplified Examples
-
-If you want to only download your repositories (public), you can do
-
-```Python
-git-neko -u <your-username>
-```
-
-If you want to only download your repositories (public and private), you can either do
-
-```Python
-git-neko -u <your-username> -t <your-personal-access-token>
-```
-
-or you can put your information on environment variables and do
-
-```Python
-git-neko -e <anything>
-```
-
-If you want to download other people's repositories (public), you can do
-
-```Python
-git-neko -u <their-username>
-```
-
-If you want to download other people's repositories (public and private), you can do
-
-```Python
-git-neko -u <their-username> -t <their-personal-access-token>
-```
+* Dynamic API Routing: Automatically identifies the correct GitHub endpoint. It uses `/users/{username}/repos` for public browsing or the authenticated `/user/repos` for private access, ensuring you get the full list of repos you have permission to view.
+* State-Aware Syncing: Instead of a simple download, it checks your local file system. If a repo already exists, it intelligently switches to an "update" mode (using `git pull` or overwriting via `requests`) to keep your local mirror current.
+* Hybrid Engine Support:
+  * Lightweight Mode: Uses `requests` to pull repo snapshots quickly without needing `git` installed or **SSH keys** configured.
+  * Developer Mode (`-g`): Interfaces directly with your local `git` binary to handle **full history**, **branch tracking**, and **submodule recursion**.
+* Secure Credential Persistence: Rather than requiring you to paste tokens into every command, the `-gu` and `-gpat` flags securely interface with your environment variables, allowing for a clean, single-flag execution with `-e`.
+* Subprocess Management: Uses `Python`'s `subprocess` and `os` modules to provide a robust bridge between the `GitHub API` and your local shell, handling directory navigation and command execution automatically.`
