@@ -29,6 +29,10 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP",
 ]
 
+[project.optional-dependencies]
+dev = ["flake8", "black", "isort", "pre-commit"]
+build = ["build", "twine"]
+
 [project.urls]
 Homepage = "https://github.com/NecRaul/git-neko"
 Documentation = "https://github.com/NecRaul/git-neko#readme"
