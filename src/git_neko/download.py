@@ -14,15 +14,11 @@ def download_with_requests(repos, headers):
         tarball_url = f"{repo['html_url']}/tarball/{repo['default_branch']}"
         if not os.path.exists(repo_name):
             os.mkdir(repo_name)
-            print(
-                f"[{i:>{count_digit}}/{repo_count}] Downloading the repository '{repo_name}'..."
-            )
+            print(f"[{i:>{count_digit}}/{repo_count}] Downloading '{repo_name}'...")
         else:
             shutil.rmtree(repo_name)
             os.mkdir(repo_name)
-            print(
-                f"[{i:>{count_digit}}/{repo_count}] Updating the repository '{repo_name}'..."
-            )
+            print(f"[{i:>{count_digit}}/{repo_count}] Updating '{repo_name}'...")
         response = requests.get(tarball_url, headers=headers)
         with open(f"{repo_name}.tar.gz", "wb") as file:
             file.write(response.content)
