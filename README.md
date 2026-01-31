@@ -6,20 +6,51 @@ CLI for downloading all repositories from a specified user.
 
 ### Via PyPI (Recommended)
 
+#### With pip (Basic)
+
 ```sh
 pip install git-neko
+```
+
+#### With pipx (Isolated)
+
+```sh
+pipx install git-neko
+```
+
+#### With uv (Best)
+
+The most efficient way to install or run the uploader.
+
+```sh
+# Permanent isolated installation
+uv tool install git-neko
+
+# Run once without installing
+uvx git-neko -u <username>
+
+# Run in scripts or ad-hoc environments
+uv run --with git-neko git-neko -u <username> -t <token>
 ```
 
 ### From Source (Development)
 
 ```sh
+# Clone the repository and navigate to it
 git clone git@github.com:NecRaul/git-neko.git
 cd git-neko
-# You can skip the next two commands
-# for installing it globally
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .[dev,build]
+
+# Install environment and all development dependencies (mandatory and optional)
+uv sync --dev
+
+# Install pre-commit hook
+uv run pre-commit install
+
+# Optional: Run all linters and type checkers manually
+uv run pre-commit run --all-files
+
+# Run the local version
+uv run git-neko -e -g
 ```
 
 ## Usage
@@ -44,16 +75,21 @@ git-neko -u <github-username> -t <github-personal-access-token> -g
 
 You can save your credentials to environment variables to avoid passing them manually in every command.
 
+For persistence, add these exports to your shell configuration file (e.g., `~/.bashrc`, `~/.zshrc`, or `~/.bash_profile`).
+
 ```sh
 # Set your credentials as environment variables
-export GITHUB_USERNAME=NecRaul
-export GITHUB_PERSONAL_ACCESS_TOKEN=ghp_necraul
+export GITHUB_USERNAME="NecRaul"
+export GITHUB_PERSONAL_ACCESS_TOKEN="ghp_necraul"
 
 # Run using the stored environment variables
 git-neko -e
 
 # Run using environment variables with the git engine
 git-neko -e -g
+
+# Pass environment variables directly within the command
+GITHUB_USERNAME="NecRaul" GITHUB_PERSONAL_ACCESS_TOKEN="ghp_necraul" git-neko -e
 ```
 
 ### Options
