@@ -7,15 +7,22 @@ import requests
 
 
 def download_with_requests(repos, headers):
-    for repo in repos:
+    repo_count = len(repos)
+    count_digit = len((str(repo_count)))
+    for i, repo in enumerate(repos, start=1):
         repo_name = repo["name"]
         tarball_url = f"{repo['html_url']}/tarball/{repo['default_branch']}"
         if not os.path.exists(repo_name):
             os.mkdir(repo_name)
-            print(f"Downloading the repository '{repo_name}'...")
+            print(
+                f"[{i:>{count_digit}}/{repo_count}] Downloading the repository '{repo_name}'..."
+            )
         else:
-            print(f"Updating the repository '{repo_name}'...")
             shutil.rmtree(repo_name)
+            os.mkdir(repo_name)
+            print(
+                f"[{i:>{count_digit}}/{repo_count}] Updating the repository '{repo_name}'..."
+            )
         response = requests.get(tarball_url, headers=headers)
         with open(f"{repo_name}.tar.gz", "wb") as file:
             file.write(response.content)
@@ -28,13 +35,16 @@ def download_with_requests(repos, headers):
 
 
 def download_with_git(repos):
-    for repo in repos:
+    repo_count = len(repos)
+    count_digit = len(str(repo_count))
+    for i, repo in enumerate(repos, start=1):
         repo_name = repo["name"]
         repo_pull_url = repo["ssh_url"]
         if not os.path.exists(repo_name):
+            print(f"[{i:>{count_digit}}/{repo_count}]", end=" ", flush=True)
             subprocess.call(["git", "clone", "--recursive", repo_pull_url])
         else:
-            print(f"Pulling '{repo_name}'...")
+            print(f"[{i:>{count_digit}}/{repo_count}] Pulling '{repo_name}'...")
             subprocess.call(["git", "-C", repo_name, "pull", "--recurse-submodules"])
 
 
