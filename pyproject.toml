@@ -40,7 +40,7 @@ Repository = "https://github.com/NecRaul/git-neko"
 Issues = "https://github.com/NecRaul/git-neko/issues"
 
 [project.scripts]
-git-neko = "git_neko:main"
+git-neko = "git_neko.cli:main"
 
 [tool.setuptools]
 py-modules = ["download", "environment"]

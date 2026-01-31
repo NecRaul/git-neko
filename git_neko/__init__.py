@@ -2,7 +2,6 @@ import argparse
 import os
 
 from .download import download_repositories
-from .environment import set_environment_variable
 
 
 def main():
@@ -35,44 +34,24 @@ def main():
         "--git",
         action="store_true",
         help="Whether to download with git or not. False by default since it's "
-        "dependent on whether or not git is downloaded (and your ssh/gpg key). IF YOU "
-        "TYPE ANYTHING IN AFTER -g/--git IT WILL BE ACCEPTED AS TRUE.",
-    )
-    parser.add_argument(
-        "-gu",
-        "--gusername",
-        type=str,
-        metavar="Username",
-        help="Set Github username as environment variable.",
-    )
-    parser.add_argument(
-        "-gpat",
-        "--gpat",
-        type=str,
-        metavar="Token",
-        help="Set Github personal access token as environment variable.",
+        "dependent on whether or not git is downloaded (and your ssh/gpg key).",
     )
 
     args = parser.parse_args()
 
-    if args.gusername:
-        set_environment_variable("GITHUB_USERNAME", args.gusername)
-    if args.gpat:
-        set_environment_variable("GITHUB_PERSONAL_ACCESS_TOKEN", args.gpat)
-    if not args.gusername and not args.gpat:
-        if args.environment:  # false by default/if you don't use the argument
-            username = os.getenv("GITHUB_USERNAME")
-            token = os.getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
-        else:
-            username = args.username
-            token = args.token
+    if args.environment:
+        username = os.getenv("GITHUB_USERNAME")
+        token = os.getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
+    else:
+        username = args.username
+        token = args.token
 
-        git_check = args.git  # false by default/if you don't use the argument
+    git_check = args.git
 
-        if not username:
-            print("Pass your Github username with -u.")
-        else:
-            download_repositories(username, token, git_check)
+    if not username:
+        print("Pass your Github username with -u.")
+    else:
+        download_repositories(username, token, git_check)
 
 
 if __name__ == "__main__":

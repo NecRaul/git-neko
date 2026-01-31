@@ -42,7 +42,7 @@ setup(
     py_modules=["download", "environment"],
     entry_points={
         "console_scripts": [
-            "git-neko = git_neko:main",
+            "git-neko = git_neko.cli:main",
         ],
     },
 )

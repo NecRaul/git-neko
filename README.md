@@ -46,7 +46,8 @@ You can save your credentials to environment variables to avoid passing them man
 
 ```sh
 # Set your credentials as environment variables
-git-neko -gu <github-username> -gpat <github-personal-access-token>
+export GITHUB_USERNAME=NecRaul
+export GITHUB_PERSONAL_ACCESS_TOKEN=ghp_necraul
 
 # Run using the stored environment variables
 git-neko -e
@@ -55,11 +56,6 @@ git-neko -e
 git-neko -e -g
 ```
 
-> [!WARNING]
-> The `-gu` and `-gpat` flags for setting environment variables only work on Windows.
->
-> It is recommended to set `$GITHUB_USERNAME` and `$GITHUB_PERSONAL_ACCESS_TOKEN` variables in your shell profile.
-
 ### Options
 
 ```sh
@@ -67,8 +63,6 @@ git-neko -e -g
 -t, --token         TOKEN       GitHub personal access token (required for private repositories)
 -e, --environment   -           Use stored environment variables for username and token
 -g, --git           -           Use git engine instead of requests (handles history/branches/submodules)
--gu, --gusername    USERNAME    Save the GitHub username to your environment variables
--gpat, --gpat       TOKEN       Save the GitHub token to your environment variables
 ```
 
 > [!TIP]
@@ -112,5 +106,4 @@ done
 * Hybrid Engine Support:
   * Lightweight Mode: Uses `requests` to pull repo snapshots quickly without needing `git` installed or **SSH keys** configured.
   * Developer Mode (`-g`): Interfaces directly with your local `git` binary to handle **full history**, **branch tracking**, and **submodule recursion**.
-* Secure Credential Persistence: Rather than requiring you to paste tokens into every command, the `-gu` and `-gpat` flags securely interface with your environment variables, allowing for a clean, single-flag execution with `-e`.
 * Subprocess Management: Uses `Python`'s `subprocess` and `os` modules to provide a robust bridge between the `GitHub API` and your local shell, handling directory navigation and command execution automatically.`
