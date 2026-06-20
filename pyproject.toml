@@ -38,7 +38,7 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/NecRaul/git-neko"
 Documentation = "https://github.com/NecRaul/git-neko#readme"
-Repository = "https://github.com/NecRaul/git-neko"
+Repository = "https://github.com/NecRaul/git-neko.git"
 Issues = "https://github.com/NecRaul/git-neko/issues"
 
 [project.scripts]
@@ -46,11 +46,11 @@ git-neko = "git_neko.cli:main"
 
 [dependency-groups]
 dev = [
-  "ruff>=0.14.14",
-  "ty>=0.0.14",
-  "pre-commit>=4.5.1",
+  "ruff>=0.15.17",
+  "ty>=0.0.50",
+  "pre-commit>=4.6.0",
   "debugpy>=1.8.20",
-  "pytest>=9.0.2",
+  "pytest>=9.1.0",
 ]
 
 [tool.uv]
