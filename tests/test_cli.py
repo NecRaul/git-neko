@@ -17,7 +17,9 @@ class CliTests(unittest.TestCase):
 
         with (
             patch.object(
-                cli, "download_repositories", side_effect=fake_download_repositories
+                cli.download,
+                "download_repositories",
+                side_effect=fake_download_repositories,
             ),
             patch.object(
                 sys,
@@ -38,7 +40,9 @@ class CliTests(unittest.TestCase):
 
         with (
             patch.object(
-                cli, "download_repositories", side_effect=fake_download_repositories
+                cli.download,
+                "download_repositories",
+                side_effect=fake_download_repositories,
             ),
             patch.dict(
                 "os.environ",

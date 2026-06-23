@@ -5,7 +5,7 @@ import tarfile
 
 import requests
 
-from . import util
+from git_neko import util
 
 
 def download_with_requests(repos, headers):

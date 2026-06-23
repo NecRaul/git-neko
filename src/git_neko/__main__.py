@@ -3,7 +3,7 @@
 # Execute with
 # $ python3 -m git_neko
 
-from .cli import main
+from git_neko.cli import main
 
 if __name__ == "__main__":
     raise SystemExit(main())

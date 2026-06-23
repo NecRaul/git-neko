@@ -1,3 +1,4 @@
-from .download import download_repositories
+from git_neko import download
+from git_neko.version import __version__
 
-__all__ = ["download_repositories"]
+__all__ = ["download", "__version__"]
