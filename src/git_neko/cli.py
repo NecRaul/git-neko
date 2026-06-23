@@ -40,6 +40,38 @@ def main():
         help="Whether to download with git or not. False by default since it's "
         "dependent on whether or not git is downloaded (and your ssh/gpg key).",
     )
+    parser.add_argument(
+        "--access",
+        nargs="+",
+        choices=["owner", "collaborator", "accessible", "org-member", "all"],
+        default=["owner"],
+        help="Access types to include (multiple allowed).",
+    )
+    parser.add_argument(
+        "--visibility",
+        nargs="+",
+        choices=["public", "private", "internal", "all"],
+        default=["all"],
+        help="Visibility levels to include (multiple allowed).",
+    )
+    parser.add_argument(
+        "--fork",
+        choices=["yes", "no", "both"],
+        default="both",
+        help="Filter fork repositories.",
+    )
+    parser.add_argument(
+        "--archived",
+        default="both",
+        choices=["yes", "no", "both"],
+        help="Filter archived repositories.",
+    )
+    parser.add_argument(
+        "--template",
+        default="both",
+        choices=["yes", "no", "both"],
+        help="Filter template repositories.",
+    )
 
     args = parser.parse_args()
 
@@ -51,8 +83,15 @@ def main():
         token = args.token
 
     git_check = args.git
+    options = {
+        "access": args.access,
+        "visibility": args.visibility,
+        "fork": args.fork,
+        "archived": args.archived,
+        "template": args.template,
+    }
 
     if not username:
         print("Pass your Github username with -u.")
     else:
-        download_repositories(username, token, git_check)
+        download_repositories(username, token, git_check, options)

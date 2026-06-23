@@ -19,7 +19,7 @@ class _FakeResponse:
 
 
 class DownloadTests(unittest.TestCase):
-    def test_get_all_repos_uses_public_endpoint_without_token(self):
+    def test_get_repositories_uses_public_endpoint_without_token(self):
         self.assertEqual(requests.__name__, "requests")
         calls: list[tuple[str, dict | None]] = []
 
@@ -39,7 +39,7 @@ class DownloadTests(unittest.TestCase):
             return responses.pop(0)
 
         with patch.object(download.requests, "get", side_effect=fake_get):
-            repos = download.get_all_repos("alice", token=None, headers=None)
+            repos = download.get_repositories("alice", headers=None)
 
         self.assertEqual(repos, [{"full_name": "alice/repo-1"}])
         self.assertEqual(
@@ -50,7 +50,7 @@ class DownloadTests(unittest.TestCase):
             ],
         )
 
-    def test_get_all_repos_uses_authenticated_endpoint_with_token(self):
+    def test_get_repositories_uses_authenticated_endpoint_with_token(self):
         calls: list[tuple[str, dict | None]] = []
         headers = {"Authorization": "token abc123"}
 
@@ -70,7 +70,7 @@ class DownloadTests(unittest.TestCase):
             return responses.pop(0)
 
         with patch.object(download.requests, "get", side_effect=fake_get):
-            repos = download.get_all_repos("alice", token="abc123", headers=headers)
+            repos = download.get_repositories("alice", headers=headers)
 
         self.assertEqual(repos, [{"full_name": "alice/private-repo"}])
         self.assertEqual(
@@ -81,7 +81,7 @@ class DownloadTests(unittest.TestCase):
             ],
         )
 
-    def test_get_all_repos_stops_and_returns_collected_on_error(self):
+    def test_get_repositories_stops_and_returns_collected_on_error(self):
         responses = [
             _FakeResponse(200, [{"full_name": "alice/repo-1"}]),
             _FakeResponse(500, [], text="boom"),
@@ -95,7 +95,7 @@ class DownloadTests(unittest.TestCase):
             patch.object(download.requests, "get", side_effect=fake_get),
             redirect_stdout(output),
         ):
-            repos = download.get_all_repos("alice", token=None, headers=None)
+            repos = download.get_repositories("alice", headers=None)
 
         self.assertEqual(repos, [{"full_name": "alice/repo-1"}])
         self.assertIn("500 boom", output.getvalue())

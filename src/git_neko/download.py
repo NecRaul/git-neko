@@ -5,6 +5,8 @@ import tarfile
 
 import requests
 
+from . import util
+
 
 def download_with_requests(repos, headers):
     repo_count = len(repos)
@@ -44,13 +46,13 @@ def download_with_git(repos):
             subprocess.call(["git", "-C", repo_name, "pull", "--recurse-submodules"])
 
 
-def get_all_repos(username, token, headers):
+def get_repositories(username, headers):
     repos = []
     page = 1
 
     while True:
         page_query = f"?per_page=100&page={page}"
-        if not token:
+        if not headers:
             API_ENDPOINT = f"https://api.github.com/users/{username}/repos{page_query}"
         else:
             API_ENDPOINT = f"https://api.github.com/user/repos{page_query}"
@@ -69,14 +71,54 @@ def get_all_repos(username, token, headers):
         repos.extend(page_repos)
         page += 1
 
-    return [repo for repo in repos if username in repo["full_name"]]
+    return repos
 
 
-def download_repositories(username, token, git_check):
+def filter_repositories(repos, username, orgs, options):
+    return [
+        repo
+        for repo in repos
+        if util.matches_access(repo, username, orgs, options["access"])
+        and util.matches_visibility(repo, options["visibility"])
+        and util.matches_fork(repo, options["fork"])
+        and util.matches_archived(repo, options["archived"])
+        and util.matches_template(repo, options["template"])
+    ]
+
+
+def get_organizations(username, headers):
+    orgs = []
+    page = 1
+
+    while True:
+        page_query = f"?per_page=100&page={page}"
+        if not headers:
+            API_ENDPOINT = f"https://api.github.com/users/{username}/orgs{page_query}"
+        else:
+            API_ENDPOINT = f"https://api.github.com/user/orgs{page_query}"
+
+        response = requests.get(API_ENDPOINT, headers=headers)
+
+        response.raise_for_status()
+
+        page_orgs = response.json()
+
+        if not page_orgs:
+            break
+
+        orgs.extend(page_orgs)
+        page += 1
+
+    return [org["login"] for org in orgs]
+
+
+def download_repositories(username, token, git_check, options):
     headers = {"Authorization": f"token {token}"} if token else None
-    repos = get_all_repos(username, token, headers)
+    repos = get_repositories(username, headers)
+    orgs = get_organizations(username, headers)
+    filtered_repos = filter_repositories(repos, username, orgs, options)
 
     if git_check:
-        download_with_git(repos)
+        download_with_git(filtered_repos)
     else:
-        download_with_requests(repos, headers)
+        download_with_requests(filtered_repos, headers)
