@@ -16,29 +16,25 @@ def main():
         "-u",
         "--username",
         type=str,
-        metavar="Username",
-        help="Github username to download repositories from.",
+        help="GitHub username to fetch repositories from.",
     )
     parser.add_argument(
         "-t",
         "--token",
         type=str,
-        metavar="Token",
-        help="Github public access token if you want to also download private "
-        "repositories.",
+        help="GitHub public access token for private repositories.",
     )
     parser.add_argument(
         "-e",
         "--environment",
-        action="store_true",
-        help="Whether to use environment variables or not.",
+        action=argparse.BooleanOptionalAction,
+        help="Read the username and token from environment variables.",
     )
     parser.add_argument(
         "-g",
         "--git",
-        action="store_true",
-        help="Whether to download with git or not. False by default since it's "
-        "dependent on whether or not git is downloaded (and your ssh/gpg key).",
+        action=argparse.BooleanOptionalAction,
+        help="Download repositories using git instead of archive downloads.",
     )
     parser.add_argument(
         "--access",
