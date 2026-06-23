@@ -1,5 +1,5 @@
-def matches_access(repo, username, orgs, option):
-    if "all" in option:
+def matches_access(repo, username, orgs, filter):
+    if "all" in filter:
         return True
 
     owner = repo.get("owner", {})
@@ -7,39 +7,47 @@ def matches_access(repo, username, orgs, option):
     owner_type = owner.get("type")
     permissions = repo.get("permissions", {})
 
-    if "owner" in option and owner_login == username:
+    if "owner" in filter and owner_login == username:
         return True
-    if "collaborator" in option and owner_login != username and permissions.get("push"):
-        return True
-
-    if "accessible" in option and owner_login != username and permissions.get("pull"):
+    if "collaborator" in filter and owner_login != username and permissions.get("push"):
         return True
 
-    if "org-member" in option and owner_login in orgs and owner_type == "Organization":
+    if "accessible" in filter and owner_login != username and permissions.get("pull"):
+        return True
+
+    if "org-member" in filter and owner_login in orgs and owner_type == "Organization":
         return True
 
     return False
 
 
-def matches_visibility(repo, option):
-    if "all" in option:
+def matches_visibility(repo, filter):
+    if "all" in filter:
         return True
-    return repo["visibility"] in option
+    return repo["visibility"] in filter
 
 
-def matches_fork(repo, option):
-    return matches_bool(repo["fork"], option)
+def matches_fork(repo, filter):
+    return matches_bool(repo["fork"], filter)
 
 
-def matches_archived(repo, option):
-    return matches_bool(repo["archived"], option)
+def matches_archived(repo, filter):
+    return matches_bool(repo["archived"], filter)
 
 
-def matches_template(repo, option):
-    return matches_bool(repo["is_template"], option)
+def matches_template(repo, filter):
+    return matches_bool(repo["is_template"], filter)
 
 
-def matches_bool(value, option):
-    if option == "both":
+def matches_bool(value, filter):
+    if filter == "both":
         return True
-    return value == (option == "yes")
+    return value == (filter == "yes")
+
+
+def remove_none(data):
+    if isinstance(data, dict):
+        return {
+            key: remove_none(value) for key, value in data.items() if value is not None
+        }
+    return data

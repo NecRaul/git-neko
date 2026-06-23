@@ -74,15 +74,15 @@ def get_repositories(username, headers):
     return repos
 
 
-def filter_repositories(repos, username, orgs, options):
+def filter_repositories(repos, username, orgs, filters):
     return [
         repo
         for repo in repos
-        if util.matches_access(repo, username, orgs, options["access"])
-        and util.matches_visibility(repo, options["visibility"])
-        and util.matches_fork(repo, options["fork"])
-        and util.matches_archived(repo, options["archived"])
-        and util.matches_template(repo, options["template"])
+        if util.matches_access(repo, username, orgs, filters["access"])
+        and util.matches_visibility(repo, filters["visibility"])
+        and util.matches_fork(repo, filters["fork"])
+        and util.matches_archived(repo, filters["archived"])
+        and util.matches_template(repo, filters["template"])
     ]
 
 
@@ -112,13 +112,13 @@ def get_organizations(username, headers):
     return [org["login"] for org in orgs]
 
 
-def download_repositories(username, token, git_check, options):
+def download_repositories(username, token, git_enabled, filters):
     headers = {"Authorization": f"token {token}"} if token else None
     repos = get_repositories(username, headers)
     orgs = get_organizations(username, headers)
-    filtered_repos = filter_repositories(repos, username, orgs, options)
+    filtered_repos = filter_repositories(repos, username, orgs, filters)
 
-    if git_check:
+    if git_enabled:
         download_with_git(filtered_repos)
     else:
         download_with_requests(filtered_repos, headers)
