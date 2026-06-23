@@ -17,7 +17,7 @@ class CliTests(unittest.TestCase):
 
         with (
             patch.object(
-                cli.download,
+                cli.github,
                 "download_repositories",
                 side_effect=fake_download_repositories,
             ),
@@ -40,7 +40,7 @@ class CliTests(unittest.TestCase):
 
         with (
             patch.object(
-                cli.download,
+                cli.github,
                 "download_repositories",
                 side_effect=fake_download_repositories,
             ),

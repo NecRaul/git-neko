@@ -3,7 +3,7 @@ import unittest
 from contextlib import redirect_stdout
 from unittest.mock import patch
 
-from git_neko import config, download
+from git_neko import config, github
 
 
 class _FakeResponse:
@@ -59,9 +59,9 @@ class DownloadTests(unittest.TestCase):
             calls.append((url, headers))
             return responses.pop(0)
 
-        with patch.object(download.requests, "get", side_effect=fake_get):
-            repos = download.get_repositories("alice", headers=headers)
-            filtered_repos = download.filter_repositories(repos, "alice", [], filters)
+        with patch.object(github.requests, "get", side_effect=fake_get):
+            repos = github.get_repositories("alice", headers=headers)
+            filtered_repos = github.filter_repositories(repos, "alice", [], filters)
 
         self.assertEqual(filtered_repos, [fake_repo("repo-1")])
         self.assertEqual(
@@ -98,9 +98,9 @@ class DownloadTests(unittest.TestCase):
             calls.append((url, headers))
             return responses.pop(0)
 
-        with patch.object(download.requests, "get", side_effect=fake_get):
-            repos = download.get_repositories("alice", headers=headers)
-            filtered_repos = download.filter_repositories(repos, "alice", [], filters)
+        with patch.object(github.requests, "get", side_effect=fake_get):
+            repos = github.get_repositories("alice", headers=headers)
+            filtered_repos = github.filter_repositories(repos, "alice", [], filters)
 
         self.assertEqual(filtered_repos, [fake_repo("private-repo")])
         self.assertEqual(
@@ -127,11 +127,11 @@ class DownloadTests(unittest.TestCase):
 
         stdout = io.StringIO()
         with (
-            patch.object(download.requests, "get", side_effect=fake_get),
+            patch.object(github.requests, "get", side_effect=fake_get),
             redirect_stdout(stdout),
         ):
-            repos = download.get_repositories("alice", headers=headers)
-            filtered_repos = download.filter_repositories(repos, "alice", [], filters)
+            repos = github.get_repositories("alice", headers=headers)
+            filtered_repos = github.filter_repositories(repos, "alice", [], filters)
 
         self.assertEqual(filtered_repos, [fake_repo("repo-1")])
         self.assertIn("500 boom", stdout.getvalue())
