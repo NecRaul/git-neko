@@ -5,14 +5,17 @@ from contextlib import redirect_stderr
 from unittest.mock import patch
 
 from git_neko import cli, config
+from git_neko.models import FiltersConfig
 
 
 class CliTests(unittest.TestCase):
-    def test_main_uses_explicit_cli_arguments(self):
-        called = {}
-        filters = config.DEFAULT_CONFIG.get("filters")
+    def test_main_uses_explicit_cli_arguments(self) -> None:
+        called: dict[str, tuple[str, str | None, bool, FiltersConfig]] = {}
+        filters: FiltersConfig = config.DEFAULT_CONFIG["filters"]
 
-        def fake_download_repositories(username, token, git_enabled, filters):
+        def fake_download_repositories(
+            username: str, token: str | None, git_enabled: bool, filters: FiltersConfig
+        ) -> None:
             called["args"] = (username, token, git_enabled, filters)
 
         with (
@@ -31,11 +34,13 @@ class CliTests(unittest.TestCase):
 
         self.assertEqual(called["args"], ("alice", "token123", True, filters))
 
-    def test_main_uses_environment_variables_when_enabled(self):
-        called = {}
-        filters = config.DEFAULT_CONFIG.get("filters")
+    def test_main_uses_environment_variables_when_enabled(self) -> None:
+        called: dict[str, tuple[str, str | None, bool, FiltersConfig]] = {}
+        filters: FiltersConfig = config.DEFAULT_CONFIG["filters"]
 
-        def fake_download_repositories(username, token, git_enabled, filters):
+        def fake_download_repositories(
+            username: str, token: str | None, git_enabled: bool, filters: FiltersConfig
+        ) -> None:
             called["args"] = (username, token, git_enabled, filters)
 
         with (
@@ -58,8 +63,8 @@ class CliTests(unittest.TestCase):
 
         self.assertEqual(called["args"], ("env-user", "env-token", True, filters))
 
-    def test_main_prints_hint_if_username_missing(self):
-        stderr = io.StringIO()
+    def test_main_prints_hint_if_username_missing(self) -> None:
+        stderr: io.StringIO = io.StringIO()
 
         with (
             patch.object(sys, "argv", ["git-neko", "--no-config"]),
