@@ -1,7 +1,7 @@
-import io
 import unittest
-from contextlib import redirect_stdout
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
+
+import requests
 
 from git_neko import config, github
 
@@ -14,6 +14,13 @@ class _FakeResponse:
 
     def json(self):
         return self._payload
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise requests.HTTPError(
+                f"{self.status_code} {self.text}",
+                response=MagicMock(status_code=self.status_code),
+            )
 
 
 def fake_repo(
@@ -43,7 +50,7 @@ def fake_repo(
 
 class DownloadTests(unittest.TestCase):
     def test_get_repositories_uses_public_endpoint_without_token(self):
-        calls: list[tuple[str, dict | None]] = []
+        calls: list[tuple[str, dict | None, dict | None]] = []
         filters = config.DEFAULT_CONFIG.get("filters")
         headers = None
 
@@ -55,8 +62,8 @@ class DownloadTests(unittest.TestCase):
             _FakeResponse(payload=[], status_code=200),
         ]
 
-        def fake_get(url, headers=None):
-            calls.append((url, headers))
+        def fake_get(url, headers=None, params=None):
+            calls.append((url, headers, params))
             return responses.pop(0)
 
         with patch.object(github.requests, "get", side_effect=fake_get):
@@ -68,18 +75,20 @@ class DownloadTests(unittest.TestCase):
             calls,
             [
                 (
-                    "https://api.github.com/users/alice/repos?per_page=100&page=1",
+                    "https://api.github.com/users/alice/repos",
                     headers,
+                    {"per_page": 100, "page": 1},
                 ),
                 (
-                    "https://api.github.com/users/alice/repos?per_page=100&page=2",
+                    "https://api.github.com/users/alice/repos",
                     headers,
+                    {"per_page": 100, "page": 2},
                 ),
             ],
         )
 
     def test_get_repositories_uses_authenticated_endpoint_with_token(self):
-        calls: list[tuple[str, dict | None]] = []
+        calls: list[tuple[str, dict | None, dict | None]] = []
         filters = config.DEFAULT_CONFIG.get("filters")
         headers = {"Authorization": "token abc123"}
 
@@ -94,8 +103,8 @@ class DownloadTests(unittest.TestCase):
             _FakeResponse(payload=[], status_code=200),
         ]
 
-        def fake_get(url, headers=None):
-            calls.append((url, headers))
+        def fake_get(url, headers=None, params=None):
+            calls.append((url, headers, params))
             return responses.pop(0)
 
         with patch.object(github.requests, "get", side_effect=fake_get):
@@ -106,14 +115,21 @@ class DownloadTests(unittest.TestCase):
         self.assertEqual(
             calls,
             [
-                ("https://api.github.com/user/repos?per_page=100&page=1", headers),
-                ("https://api.github.com/user/repos?per_page=100&page=2", headers),
+                (
+                    "https://api.github.com/user/repos",
+                    headers,
+                    {"per_page": 100, "page": 1},
+                ),
+                (
+                    "https://api.github.com/user/repos",
+                    headers,
+                    {"per_page": 100, "page": 2},
+                ),
             ],
         )
 
     def test_get_repositories_stops_and_returns_collected_on_error(self):
-        calls: list[tuple[str, dict | None]] = []
-        filters = config.DEFAULT_CONFIG.get("filters")
+        calls: list[tuple[str, dict | None, dict | None]] = []
         headers = None
 
         responses = [
@@ -121,17 +137,10 @@ class DownloadTests(unittest.TestCase):
             _FakeResponse(payload=[], status_code=500, text="boom"),
         ]
 
-        def fake_get(url, headers=None):
-            calls.append((url, headers))
+        def fake_get(url, headers=None, params=None):
+            calls.append((url, headers, params))
             return responses.pop(0)
 
-        stdout = io.StringIO()
-        with (
-            patch.object(github.requests, "get", side_effect=fake_get),
-            redirect_stdout(stdout),
-        ):
-            repos = github.get_repositories("alice", headers=headers)
-            filtered_repos = github.filter_repositories(repos, "alice", [], filters)
-
-        self.assertEqual(filtered_repos, [fake_repo("repo-1")])
-        self.assertIn("500 boom", stdout.getvalue())
+        with patch.object(github.requests, "get", side_effect=fake_get):
+            with self.assertRaises(requests.HTTPError):
+                github.get_repositories("alice", headers=headers)

@@ -46,32 +46,44 @@ def download_with_git(repos):
             subprocess.call(["git", "-C", repo_name, "pull", "--recurse-submodules"])
 
 
-def get_repositories(username, headers):
-    repos = []
+def github_get_all(endpoint, headers):
+    items = []
     page = 1
 
     while True:
-        page_query = f"?per_page=100&page={page}"
-        if not headers:
-            API_ENDPOINT = f"https://api.github.com/users/{username}/repos{page_query}"
-        else:
-            API_ENDPOINT = f"https://api.github.com/user/repos{page_query}"
+        response = requests.get(
+            endpoint, headers=headers, params={"per_page": 100, "page": page}
+        )
 
-        response = requests.get(API_ENDPOINT, headers=headers)
+        response.raise_for_status()
 
-        if response.status_code != 200:
-            print(response.status_code, response.text)
+        page_items = response.json()
+
+        if not page_items:
             break
 
-        page_repos = response.json()
-
-        if not page_repos:
-            break
-
-        repos.extend(page_repos)
+        items.extend(page_items)
         page += 1
 
-    return repos
+    return items
+
+
+def get_repositories(username, headers):
+    if not headers:
+        endpoint = f"https://api.github.com/users/{username}/repos"
+    else:
+        endpoint = "https://api.github.com/user/repos"
+
+    return github_get_all(endpoint, headers)
+
+
+def get_organizations(username, headers):
+    if not headers:
+        endpoint = f"https://api.github.com/users/{username}/orgs"
+    else:
+        endpoint = "https://api.github.com/user/orgs"
+
+    return github_get_all(endpoint, headers)
 
 
 def filter_repositories(repos, username, orgs, filters):
@@ -84,32 +96,6 @@ def filter_repositories(repos, username, orgs, filters):
         and util.matches_archived(repo, filters["archived"])
         and util.matches_template(repo, filters["template"])
     ]
-
-
-def get_organizations(username, headers):
-    orgs = []
-    page = 1
-
-    while True:
-        page_query = f"?per_page=100&page={page}"
-        if not headers:
-            API_ENDPOINT = f"https://api.github.com/users/{username}/orgs{page_query}"
-        else:
-            API_ENDPOINT = f"https://api.github.com/user/orgs{page_query}"
-
-        response = requests.get(API_ENDPOINT, headers=headers)
-
-        response.raise_for_status()
-
-        page_orgs = response.json()
-
-        if not page_orgs:
-            break
-
-        orgs.extend(page_orgs)
-        page += 1
-
-    return [org["login"] for org in orgs]
 
 
 def download_repositories(username, token, git_enabled, filters):
