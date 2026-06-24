@@ -1,7 +1,7 @@
-import os
 import shutil
 import subprocess
 import tarfile
+from pathlib import Path
 
 import requests
 
@@ -12,24 +12,27 @@ def download_with_requests(repos, headers):
     repo_count = len(repos)
     count_digit = len((str(repo_count)))
     for i, repo in enumerate(repos, start=1):
-        repo_name = repo["name"]
         tarball_url = f"{repo['html_url']}/tarball/{repo['default_branch']}"
-        if not os.path.exists(repo_name):
-            os.mkdir(repo_name)
+        repo_name = repo["name"]
+        repo_dir = Path(repo_name)
+        if not repo_dir.exists():
             print(f"[{i:>{count_digit}}/{repo_count}] Downloading '{repo_name}'...")
         else:
-            shutil.rmtree(repo_name)
-            os.mkdir(repo_name)
+            shutil.rmtree(repo_dir)
             print(f"[{i:>{count_digit}}/{repo_count}] Updating '{repo_name}'...")
-        response = requests.get(tarball_url, headers=headers)
-        with open(f"{repo_name}.tar.gz", "wb") as file:
-            file.write(response.content)
-        with tarfile.open(f"{repo_name}.tar.gz", "r:gz") as tar_ref:
-            tar_info = tar_ref.getmembers()[1:]
-            for member in tar_info:
-                member.name = f"{repo_name}/{member.name.split('/', 1)[-1]}"
-                tar_ref.extract(member)
-        os.remove(f"{repo_name}.tar.gz")
+        response = requests.get(tarball_url, headers=headers, timeout=30)
+        response.raise_for_status()
+        tar_path = Path(f"{repo_name}.tar.gz")
+        tar_path.write_bytes(response.content)
+        with tarfile.open(tar_path, "r:gz") as tar_ref:
+            root_dir = next(
+                member.name.split("/", 1)[0]
+                for member in tar_ref.getmembers()
+                if member.name
+            )
+            tar_ref.extractall()
+        Path(root_dir).rename(repo_dir)
+        tar_path.unlink()
 
 
 def download_with_git(repos):
@@ -38,7 +41,7 @@ def download_with_git(repos):
     for i, repo in enumerate(repos, start=1):
         repo_name = repo["name"]
         repo_pull_url = repo["ssh_url"]
-        if not os.path.exists(repo_name):
+        if not Path(repo_name).exists():
             print(f"[{i:>{count_digit}}/{repo_count}]", end=" ", flush=True)
             subprocess.call(["git", "clone", "--recursive", repo_pull_url])
         else:
