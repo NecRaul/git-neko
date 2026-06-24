@@ -108,7 +108,7 @@ def main():
 
     username = cfg["github"]["username"]
     token = cfg["github"]["token"]
-    git_enabled = cfg["git"]["enabled"]
+    git_enabled = cfg["download"]["git"]["enabled"]
     filters = cfg["filters"]
 
     if not username:

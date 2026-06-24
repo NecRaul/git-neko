@@ -15,10 +15,12 @@ DEFAULT_CONFIG = {
         "token": None,
         "environment": False,
     },
-    "git": {
-        "enabled": True,
-        "clone_args": ["--recursive"],
-        "pull_args": ["--recurse-submodules"],
+    "download": {
+        "git": {
+            "enabled": True,
+            "clone_args": ["--recursive"],
+            "pull_args": ["--recurse-submodules"],
+        },
     },
     "filters": {
         "access": ["owner"],
