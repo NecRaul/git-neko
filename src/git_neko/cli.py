@@ -1,18 +1,22 @@
 import argparse
 import json
 import sys
+from pathlib import Path
 
 from git_neko import __version__, config, github
+from git_neko.models import Config, FiltersConfig
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Download specified user's all repositories at once",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         epilog="Example: %(prog)s -u NecRaul -g",
     )
     parser.add_argument("-v", "--version", action="version", version=__version__)
-    config_group = parser.add_mutually_exclusive_group()
+    config_group: argparse._MutuallyExclusiveGroup = (
+        parser.add_mutually_exclusive_group()
+    )
     config_group.add_argument("--config", help="load configuration from file")
     config_group.add_argument(
         "--no-config", action="store_true", help="ignore configuration file"
@@ -81,35 +85,37 @@ def main():
         help="Filter template repositories.",
     )
 
-    args = parser.parse_args()
+    args: argparse.Namespace = parser.parse_args()
 
     if hasattr(args, "init_config"):
-        path = config.save_config(config.DEFAULT_CONFIG, args.init_config)
+        path: Path = config.save_config(config.DEFAULT_CONFIG, args.init_config)
         print(f"Config created at {path}", file=sys.stderr)
         if args.show_config:
             print(json.dumps(config.DEFAULT_CONFIG, indent=2))
         return
 
-    cfg = config.load_effective_config(path=args.config, no_config=args.no_config)
+    cfg: Config = config.load_effective_config(
+        path=args.config, no_config=args.no_config
+    )
 
     if args.show_config:
         print(json.dumps(cfg, indent=2))
         return
 
-    cli_environment = getattr(args, "environment", None)
-    use_environment = (
+    cli_environment: bool | None = getattr(args, "environment", None)
+    use_environment: bool = (
         cli_environment if cli_environment is not None else cfg["github"]["environment"]
     )
 
     if use_environment:
-        cfg = config.apply_environment_overrides(cfg)
+        cfg: Config = config.apply_environment_overrides(cfg)
 
-    cfg = config.apply_cli_overrides(cfg, args)
+    cfg: Config = config.apply_cli_overrides(cfg, args)
 
-    username = cfg["github"]["username"]
-    token = cfg["github"]["token"]
-    git_enabled = cfg["download"]["git"]["enabled"]
-    filters = cfg["filters"]
+    username: str | None = cfg["github"]["username"]
+    token: str | None = cfg["github"]["token"]
+    git_enabled: bool = cfg["download"]["git"]["enabled"]
+    filters: FiltersConfig = cfg["filters"]
 
     if not username:
         parser.error("Pass your Github username with -u.")

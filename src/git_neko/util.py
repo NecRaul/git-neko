@@ -1,4 +1,11 @@
-def matches_access(repo, username, orgs, filter):
+from typing import cast
+
+from git_neko.models import Config, Repository
+
+
+def matches_access(
+    repo: Repository, username: str, org_names: list[str], filter: list[str]
+) -> bool:
     if "all" in filter:
         return True
 
@@ -15,39 +22,48 @@ def matches_access(repo, username, orgs, filter):
     if "accessible" in filter and owner_login != username and permissions.get("pull"):
         return True
 
-    if "org-member" in filter and owner_login in orgs and owner_type == "Organization":
+    if (
+        "org-member" in filter
+        and owner_login in org_names
+        and owner_type == "Organization"
+    ):
         return True
 
     return False
 
 
-def matches_visibility(repo, filter):
+def matches_visibility(repo: Repository, filter: list[str]) -> bool:
     if "all" in filter:
         return True
     return repo["visibility"] in filter
 
 
-def matches_fork(repo, filter):
+def matches_fork(repo: Repository, filter: str) -> bool:
     return matches_bool(repo["fork"], filter)
 
 
-def matches_archived(repo, filter):
+def matches_archived(repo: Repository, filter: str) -> bool:
     return matches_bool(repo["archived"], filter)
 
 
-def matches_template(repo, filter):
+def matches_template(repo: Repository, filter: str) -> bool:
     return matches_bool(repo["is_template"], filter)
 
 
-def matches_bool(value, filter):
+def matches_bool(value: bool, filter: str) -> bool:
     if filter == "both":
         return True
     return value == (filter == "yes")
 
 
-def remove_none(data):
+def remove_none(data: Config) -> Config:
     if isinstance(data, dict):
-        return {
-            key: remove_none(value) for key, value in data.items() if value is not None
-        }
+        return cast(
+            Config,
+            {
+                key: remove_none(value) if isinstance(value, dict) else value  # ty:ignore[invalid-argument-type]
+                for key, value in data.items()
+                if value is not None
+            },
+        )
     return data

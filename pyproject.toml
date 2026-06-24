@@ -69,7 +69,7 @@ target-version = "py310"
 include = ["pyproject.toml", "src/**/*.py", "tests/*.py"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I"]
+select = ["E", "F", "I", "ANN"]
 fixable = ["ALL"]
 
 [tool.ruff.format]

@@ -1,15 +1,18 @@
+import argparse
 import copy
 import json
 import os
 import platform
 from pathlib import Path
+from typing import cast
 
 from git_neko import util
+from git_neko.models import Config, ConfigDict
 
 CONFIG_NAMESPACE = "necraul"
 CONFIG_NAME = "git-neko.json"
 
-DEFAULT_CONFIG = {
+DEFAULT_CONFIG: Config = {
     "github": {
         "username": None,
         "token": None,
@@ -32,49 +35,55 @@ DEFAULT_CONFIG = {
 }
 
 
-def get_default_config_path():
+def get_default_config_path() -> Path:
     match platform.system():
         case "Windows":
-            base = os.getenv("APPDATA")
+            base: str | None = os.getenv("APPDATA")
             if base:
-                config_dir = Path(base)
+                config_dir: Path = Path(base)
             else:
-                config_dir = Path.home() / "AppData" / "Roaming"
+                config_dir: Path = Path.home() / "AppData" / "Roaming"
         case "Darwin":
-            config_dir = Path.home() / "Library" / "Application Support"
+            config_dir: Path = Path.home() / "Library" / "Application Support"
         case "Linux":
-            config_dir = Path(os.getenv("XDG_CONFIG_HOME", Path.home() / ".config"))
+            config_dir: Path = Path(
+                os.getenv("XDG_CONFIG_HOME", Path.home() / ".config")
+            )
         case _:
-            config_dir = Path(os.getenv("XDG_CONFIG_HOME", Path.home() / ".config"))
+            config_dir: Path = Path(
+                os.getenv("XDG_CONFIG_HOME", Path.home() / ".config")
+            )
     return config_dir / CONFIG_NAMESPACE / CONFIG_NAME
 
 
-def load_config(path=None):
+def load_config(path: str | None = None) -> Config:
     if path is None:
-        path = get_default_config_path()
+        path: Path = get_default_config_path()
     else:
-        path = Path(path).expanduser()
+        path: Path = Path(path).expanduser()
     if not path.exists():
         return copy.deepcopy(DEFAULT_CONFIG)
     with path.open("r", encoding="utf-8") as f:
-        user_cfg = json.load(f)
+        user_cfg: Config = json.load(f)
     return merge_config(DEFAULT_CONFIG, user_cfg)
 
 
-def merge_config(base, override):
-    result = copy.deepcopy(base)
-    for key, value in override.items():
-        if isinstance(value, dict) and isinstance(result.get(key), dict):
-            result[key] = merge_config(result[key], value)
+def merge_config(base: Config, override: Config) -> Config:
+    result: Config = copy.deepcopy(base)
+    result_dict: ConfigDict = cast(ConfigDict, result)
+    override_dict: ConfigDict = cast(ConfigDict, override)
+    for key, value in override_dict.items():
+        if isinstance(value, dict) and isinstance(result_dict.get(key), dict):
+            result_dict[key] = merge_config(result_dict[key], value)
         else:
-            result[key] = value
-    return result
+            result_dict[key] = value
+    return cast(Config, result_dict)
 
 
-def save_config(cfg, path=None):
+def save_config(cfg: Config, path: str | None = None) -> Path:
     if path is None:
-        path = get_default_config_path()
-    path = Path(path).expanduser()
+        path: Path = get_default_config_path()
+    path: Path = Path(path).expanduser()
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as f:
         json.dump(cfg, f, indent=2)
@@ -82,7 +91,7 @@ def save_config(cfg, path=None):
     return path.absolute()
 
 
-def load_effective_config(path=None, no_config=False):
+def load_effective_config(path: str | None = None, no_config: bool = False) -> Config:
     if no_config:
         return copy.deepcopy(DEFAULT_CONFIG)
     if path:
@@ -90,8 +99,8 @@ def load_effective_config(path=None, no_config=False):
     return load_config()
 
 
-def apply_environment_overrides(config):
-    overrides = {
+def apply_environment_overrides(config: Config) -> Config:
+    overrides: Config = {
         "github": {
             "username": os.getenv("GITHUB_USERNAME"),
             "token": os.getenv("GITHUB_PERSONAL_ACCESS_TOKEN"),
@@ -100,8 +109,8 @@ def apply_environment_overrides(config):
     return merge_config(config, util.remove_none(overrides))
 
 
-def apply_cli_overrides(config, args):
-    overrides = {
+def apply_cli_overrides(config: Config, args: argparse.Namespace) -> Config:
+    overrides: Config = {
         "github": {
             "username": args.username,
             "token": args.token,

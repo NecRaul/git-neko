@@ -6,26 +6,31 @@ from pathlib import Path
 import requests
 
 from git_neko import util
+from git_neko.models import FiltersConfig, Organization, Repository
 
 
-def download_with_requests(repos, headers):
-    repo_count = len(repos)
-    count_digit = len((str(repo_count)))
+def download_with_requests(
+    repos: list[Repository], headers: dict[str, str] | None
+) -> None:
+    repo_count: int = len(repos)
+    count_digit: int = len((str(repo_count)))
     for i, repo in enumerate(repos, start=1):
-        tarball_url = f"{repo['html_url']}/tarball/{repo['default_branch']}"
-        repo_name = repo["name"]
-        repo_dir = Path(repo_name)
+        tarball_url: str = f"{repo['html_url']}/tarball/{repo['default_branch']}"
+        repo_name: str = repo["name"]
+        repo_dir: Path = Path(repo_name)
         if not repo_dir.exists():
             print(f"[{i:>{count_digit}}/{repo_count}] Downloading '{repo_name}'...")
         else:
             shutil.rmtree(repo_dir)
             print(f"[{i:>{count_digit}}/{repo_count}] Updating '{repo_name}'...")
-        response = requests.get(tarball_url, headers=headers, timeout=30)
+        response: requests.Response = requests.get(
+            tarball_url, headers=headers, timeout=30
+        )
         response.raise_for_status()
-        tar_path = Path(f"{repo_name}.tar.gz")
+        tar_path: Path = Path(f"{repo_name}.tar.gz")
         tar_path.write_bytes(response.content)
         with tarfile.open(tar_path, "r:gz") as tar_ref:
-            root_dir = next(
+            root_dir: str = next(
                 member.name.split("/", 1)[0]
                 for member in tar_ref.getmembers()
                 if member.name
@@ -35,12 +40,12 @@ def download_with_requests(repos, headers):
         tar_path.unlink()
 
 
-def download_with_git(repos):
-    repo_count = len(repos)
-    count_digit = len(str(repo_count))
+def download_with_git(repos: list[Repository]) -> None:
+    repo_count: int = len(repos)
+    count_digit: int = len(str(repo_count))
     for i, repo in enumerate(repos, start=1):
-        repo_name = repo["name"]
-        repo_pull_url = repo["ssh_url"]
+        repo_name: str = repo["name"]
+        repo_pull_url: str = repo["ssh_url"]
         if not Path(repo_name).exists():
             print(f"[{i:>{count_digit}}/{repo_count}]", end=" ", flush=True)
             subprocess.call(["git", "clone", "--recursive", repo_pull_url])
@@ -49,29 +54,27 @@ def download_with_git(repos):
             subprocess.call(["git", "-C", repo_name, "pull", "--recurse-submodules"])
 
 
-def github_get_all(endpoint, headers):
-    items = []
+def github_get_all(
+    endpoint: str, headers: dict[str, str] | None
+) -> list[Repository] | list[Organization]:
+    items: list[Repository] | list[Organization] = []
     page = 1
 
     while True:
-        response = requests.get(
+        response: requests.Response = requests.get(
             endpoint, headers=headers, params={"per_page": 100, "page": page}
         )
-
         response.raise_for_status()
-
-        page_items = response.json()
-
+        page_items: list[Repository] | list[Organization] = response.json()
         if not page_items:
             break
-
         items.extend(page_items)
         page += 1
 
     return items
 
 
-def get_repositories(username, headers):
+def get_repositories(username: str, headers: dict[str, str] | None) -> list[Repository]:
     if not headers:
         endpoint = f"https://api.github.com/users/{username}/repos"
     else:
@@ -80,7 +83,9 @@ def get_repositories(username, headers):
     return github_get_all(endpoint, headers)
 
 
-def get_organizations(username, headers):
+def get_organizations(
+    username: str, headers: dict[str, str] | None
+) -> list[Organization]:
     if not headers:
         endpoint = f"https://api.github.com/users/{username}/orgs"
     else:
@@ -89,7 +94,12 @@ def get_organizations(username, headers):
     return github_get_all(endpoint, headers)
 
 
-def filter_repositories(repos, username, orgs, filters):
+def filter_repositories(
+    repos: list[Repository],
+    username: str,
+    orgs: list[str],
+    filters: FiltersConfig,
+) -> list[Repository]:
     return [
         repo
         for repo in repos
@@ -101,11 +111,18 @@ def filter_repositories(repos, username, orgs, filters):
     ]
 
 
-def download_repositories(username, token, git_enabled, filters):
-    headers = {"Authorization": f"token {token}"} if token else None
-    repos = get_repositories(username, headers)
-    orgs = get_organizations(username, headers)
-    filtered_repos = filter_repositories(repos, username, orgs, filters)
+def download_repositories(
+    username: str, token: str | None, git_enabled: bool, filters: FiltersConfig
+) -> None:
+    headers: dict[str, str] | None = (
+        {"Authorization": f"token {token}"} if token else None
+    )
+    repos: list[Repository] = get_repositories(username, headers)
+    orgs: list[Organization] = get_organizations(username, headers)
+    org_names: list[str] = [org["login"] for org in orgs]
+    filtered_repos: list[Repository] = filter_repositories(
+        repos, username, org_names, filters
+    )
 
     if git_enabled:
         download_with_git(filtered_repos)
