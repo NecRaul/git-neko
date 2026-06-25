@@ -5,7 +5,7 @@ build-backend = "uv_build"
 [project]
 name = "git-neko"
 version = "1.28"
-description = "CLI for downloading all repositories from a specified user."
+description = "CLI for syncing repositories from a specified GitHub user."
 readme = "README.md"
 authors = [{ name = "NecRaul", email = "necraul@kuroneko.dev" }]
 license = "LGPL-2.1-only"
