@@ -4,7 +4,7 @@ from git_neko import config, github
 from git_neko.models import FiltersConfig, Repository
 
 
-class GithubIntegrationTests(unittest.TestCase):
+class GitHubIntegrationTests(unittest.TestCase):
     def test_fetches_public_repositories_from_necraul_account(self) -> None:
         filters: FiltersConfig = config.DEFAULT_CONFIG["filters"]
         repos: list[Repository] = github.get_repositories(

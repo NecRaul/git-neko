@@ -1,7 +1,7 @@
 from typing import Any, TypeAlias, TypedDict
 
 
-class GithubConfig(TypedDict, total=False):
+class GitHubConfig(TypedDict, total=False):
     username: str | None
     token: str | None
     environment: bool
@@ -14,6 +14,7 @@ class GitDownloadConfig(TypedDict, total=False):
 
 
 class DownloadConfig(TypedDict, total=False):
+    directory: str | None
     git: GitDownloadConfig
 
 
@@ -26,7 +27,7 @@ class FiltersConfig(TypedDict, total=False):
 
 
 class Config(TypedDict, total=False):
-    github: GithubConfig
+    github: GitHubConfig
     download: DownloadConfig
     filters: FiltersConfig
 

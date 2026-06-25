@@ -19,6 +19,7 @@ DEFAULT_CONFIG: Config = {
         "environment": False,
     },
     "download": {
+        "directory": ".",
         "git": {
             "enabled": True,
             "clone_args": ["--recursive"],
@@ -104,7 +105,8 @@ def apply_environment_overrides(config: Config) -> Config:
         "github": {
             "username": os.getenv("GITHUB_USERNAME"),
             "token": os.getenv("GITHUB_PERSONAL_ACCESS_TOKEN"),
-        }
+        },
+        "download": {"directory": os.getenv("GITHUB_REPOS_DIRECTORY")},
     }
     return merge_config(config, util.remove_none(overrides))
 
@@ -116,6 +118,7 @@ def apply_cli_overrides(config: Config, args: argparse.Namespace) -> Config:
             "token": args.token,
         },
         "download": {
+            "directory": args.directory,
             "git": {
                 "enabled": args.git,
             },

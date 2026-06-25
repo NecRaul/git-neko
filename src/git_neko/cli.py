@@ -58,6 +58,12 @@ def main() -> None:
         help="Download repositories using git instead of archive downloads.",
     )
     parser.add_argument(
+        "-d",
+        "--directory",
+        type=str,
+        help="Target directory for downloaded repositories.",
+    )
+    parser.add_argument(
         "--access",
         nargs="+",
         choices=["owner", "collaborator", "accessible", "org-member", "all"],
@@ -116,8 +122,12 @@ def main() -> None:
     token: str | None = cfg["github"]["token"]
     git_enabled: bool = cfg["download"]["git"]["enabled"]
     filters: FiltersConfig = cfg["filters"]
+    directory_value: str | None = cfg["download"]["directory"]
+    if directory_value is None:
+        raise ValueError("download.directory is required")
+    directory: Path = Path(directory_value).expanduser()
 
     if not username:
-        parser.error("Pass your Github username with -u.")
+        parser.error("Pass your GitHub username with -u.")
 
-    github.download_repositories(username, token, git_enabled, filters)
+    github.download_repositories(username, token, git_enabled, filters, directory)

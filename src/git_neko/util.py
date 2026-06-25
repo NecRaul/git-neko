@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import cast
 
 from git_neko.models import Config, Repository
@@ -67,3 +68,8 @@ def remove_none(data: Config) -> Config:
             },
         )
     return data
+
+
+def validate_directory(path: Path) -> None:
+    if path.exists() and not path.is_dir():
+        raise NotADirectoryError(f"Path exists but is not a directory: {path}")

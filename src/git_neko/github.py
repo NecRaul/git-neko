@@ -10,48 +10,55 @@ from git_neko.models import FiltersConfig, Organization, Repository
 
 
 def download_with_requests(
-    repos: list[Repository], headers: dict[str, str] | None
+    repos: list[Repository], headers: dict[str, str] | None, directory: Path
 ) -> None:
     repo_count: int = len(repos)
     count_digit: int = len((str(repo_count)))
+    util.validate_directory(directory)
+    directory.mkdir(parents=True, exist_ok=True)
     for i, repo in enumerate(repos, start=1):
         tarball_url: str = f"{repo['html_url']}/tarball/{repo['default_branch']}"
         repo_name: str = repo["name"]
-        repo_dir: Path = Path(repo_name)
-        if not repo_dir.exists():
-            print(f"[{i:>{count_digit}}/{repo_count}] Downloading '{repo_name}'...")
+        repo_path: Path = directory / repo_name
+        util.validate_directory(repo_path)
+        if not repo_path.exists():
+            print(f"[{i:>{count_digit}}/{repo_count}] Downloading '{repo_path}'...")
         else:
-            shutil.rmtree(repo_dir)
-            print(f"[{i:>{count_digit}}/{repo_count}] Updating '{repo_name}'...")
+            shutil.rmtree(repo_path)
+            print(f"[{i:>{count_digit}}/{repo_count}] Updating '{repo_path}'...")
         response: requests.Response = requests.get(
             tarball_url, headers=headers, timeout=30
         )
         response.raise_for_status()
-        tar_path: Path = Path(f"{repo_name}.tar.gz")
+        tar_path: Path = repo_path.with_suffix(".tar.gz")
         tar_path.write_bytes(response.content)
         with tarfile.open(tar_path, "r:gz") as tar_ref:
-            root_dir: str = next(
+            root_path: Path = directory / next(
                 member.name.split("/", 1)[0]
                 for member in tar_ref.getmembers()
                 if member.name
             )
-            tar_ref.extractall()
-        Path(root_dir).rename(repo_dir)
+            tar_ref.extractall(directory)
+        Path(root_path).rename(repo_path)
         tar_path.unlink()
 
 
-def download_with_git(repos: list[Repository]) -> None:
+def download_with_git(repos: list[Repository], directory: Path) -> None:
     repo_count: int = len(repos)
     count_digit: int = len(str(repo_count))
+    util.validate_directory(directory)
+    directory.mkdir(parents=True, exist_ok=True)
     for i, repo in enumerate(repos, start=1):
-        repo_name: str = repo["name"]
         repo_pull_url: str = repo["ssh_url"]
-        if not Path(repo_name).exists():
+        repo_name: str = repo["name"]
+        repo_path: Path = directory / repo_name
+        util.validate_directory(repo_path)
+        if not repo_path.exists():
             print(f"[{i:>{count_digit}}/{repo_count}]", end=" ", flush=True)
-            subprocess.call(["git", "clone", "--recursive", repo_pull_url])
+            subprocess.call(["git", "clone", "--recursive", repo_pull_url, repo_path])
         else:
-            print(f"[{i:>{count_digit}}/{repo_count}] Pulling '{repo_name}'...")
-            subprocess.call(["git", "-C", repo_name, "pull", "--recurse-submodules"])
+            print(f"[{i:>{count_digit}}/{repo_count}] Pulling '{repo_path}'...")
+            subprocess.call(["git", "-C", repo_path, "pull", "--recurse-submodules"])
 
 
 def github_get_all(
@@ -112,7 +119,11 @@ def filter_repositories(
 
 
 def download_repositories(
-    username: str, token: str | None, git_enabled: bool, filters: FiltersConfig
+    username: str,
+    token: str | None,
+    git_enabled: bool,
+    filters: FiltersConfig,
+    directory: Path,
 ) -> None:
     headers: dict[str, str] | None = (
         {"Authorization": f"token {token}"} if token else None
@@ -125,6 +136,6 @@ def download_repositories(
     )
 
     if git_enabled:
-        download_with_git(filtered_repos)
+        download_with_git(filtered_repos, directory)
     else:
-        download_with_requests(filtered_repos, headers)
+        download_with_requests(filtered_repos, headers, directory)
