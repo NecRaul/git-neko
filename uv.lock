@@ -179,7 +179,7 @@ wheels = [
 
 [[package]]
 name = "git-neko"
-version = "1.28"
+version = "1.29"
 source = { editable = "." }
 dependencies = [
     { name = "requests" },

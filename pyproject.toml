@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "git-neko"
-version = "1.28"
+version = "1.29"
 description = "CLI for syncing repositories from a specified GitHub user."
 readme = "README.md"
 authors = [{ name = "NecRaul", email = "necraul@kuroneko.dev" }]
