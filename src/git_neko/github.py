@@ -13,7 +13,7 @@ def download_with_requests(
     repos: list[Repository], headers: dict[str, str] | None, directory: Path
 ) -> None:
     repo_count: int = len(repos)
-    count_digit: int = len((str(repo_count)))
+    count_digit: int = len(str(repo_count))
     util.validate_directory(directory)
     directory.mkdir(parents=True, exist_ok=True)
     for i, repo in enumerate(repos, start=1):
@@ -43,11 +43,14 @@ def download_with_requests(
         tar_path.unlink()
 
 
-def download_with_git(repos: list[Repository], directory: Path) -> None:
+def download_with_git(
+    repos: list[Repository], git_args: tuple[list[str], list[str]], directory: Path
+) -> None:
     repo_count: int = len(repos)
     count_digit: int = len(str(repo_count))
     util.validate_directory(directory)
     directory.mkdir(parents=True, exist_ok=True)
+    clone_args, pull_args = git_args
     for i, repo in enumerate(repos, start=1):
         repo_pull_url: str = repo["ssh_url"]
         repo_name: str = repo["name"]
@@ -55,10 +58,12 @@ def download_with_git(repos: list[Repository], directory: Path) -> None:
         util.validate_directory(repo_path)
         if not repo_path.exists():
             print(f"[{i:>{count_digit}}/{repo_count}]", end=" ", flush=True)
-            subprocess.call(["git", "clone", "--recursive", repo_pull_url, repo_path])
+            cmd = ["git", "clone", *clone_args, repo_pull_url, repo_path.as_posix()]
+            subprocess.call(cmd)
         else:
             print(f"[{i:>{count_digit}}/{repo_count}] Pulling '{repo_path}'...")
-            subprocess.call(["git", "-C", repo_path, "pull", "--recurse-submodules"])
+            cmd = ["git", "-C", repo_path.as_posix(), "pull", *pull_args]
+            subprocess.call(cmd)
 
 
 def github_get_all(
@@ -122,6 +127,7 @@ def download_repositories(
     username: str,
     token: str | None,
     git_enabled: bool,
+    git_args: tuple[list[str], list[str]],
     filters: FiltersConfig,
     directory: Path,
 ) -> None:
@@ -136,6 +142,6 @@ def download_repositories(
     )
 
     if git_enabled:
-        download_with_git(filtered_repos, directory)
+        download_with_git(filtered_repos, git_args, directory)
     else:
         download_with_requests(filtered_repos, headers, directory)
