@@ -74,13 +74,14 @@ class DownloadTests(unittest.TestCase):
             calls.append((url, headers, params))
             return responses.pop(0)
 
-        with patch.object(github.requests, "get", side_effect=fake_get):
-            repos: list[dict[str, Any]] = github.get_repositories(
-                "alice", headers=headers
-            )
-            filtered_repos: list[dict[str, Any]] = github.filter_repositories(
-                repos, "alice", [], filters
-            )
+        with patch.object(requests.Session, "get", side_effect=fake_get):
+            with requests.Session() as session:
+                repos: list[dict[str, Any]] = github.get_repositories(
+                    session, "alice", headers=headers
+                )
+                filtered_repos: list[dict[str, Any]] = github.filter_repositories(
+                    repos, "alice", [], filters
+                )
 
         self.assertEqual(filtered_repos, [fake_repo("repo-1")])
         self.assertEqual(
@@ -123,13 +124,14 @@ class DownloadTests(unittest.TestCase):
             calls.append((url, headers, params))
             return responses.pop(0)
 
-        with patch.object(github.requests, "get", side_effect=fake_get):
-            repos: list[dict[str, Any]] = github.get_repositories(
-                "alice", headers=headers
-            )
-            filtered_repos: list[dict[str, Any]] = github.filter_repositories(
-                repos, "alice", [], filters
-            )
+        with patch.object(requests.Session, "get", side_effect=fake_get):
+            with requests.Session() as session:
+                repos: list[dict[str, Any]] = github.get_repositories(
+                    session, "alice", headers=headers
+                )
+                filtered_repos: list[dict[str, Any]] = github.filter_repositories(
+                    repos, "alice", [], filters
+                )
 
         self.assertEqual(filtered_repos, [fake_repo("private-repo")])
         self.assertEqual(
@@ -165,6 +167,7 @@ class DownloadTests(unittest.TestCase):
             calls.append((url, headers, params))
             return responses.pop(0)
 
-        with patch.object(github.requests, "get", side_effect=fake_get):
-            with self.assertRaises(requests.HTTPError):
-                github.get_repositories("alice", headers=headers)
+        with patch.object(requests.Session, "get", side_effect=fake_get):
+            with requests.Session() as session:
+                with self.assertRaises(requests.HTTPError):
+                    github.get_repositories(session, "alice", headers=headers)

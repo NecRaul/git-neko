@@ -10,7 +10,10 @@ from git_neko.models import FiltersConfig, Organization, Repository
 
 
 def download_with_requests(
-    repos: list[Repository], headers: dict[str, str] | None, directory: Path
+    session: requests.Session,
+    repos: list[Repository],
+    headers: dict[str, str] | None,
+    directory: Path,
 ) -> None:
     repo_count: int = len(repos)
     count_digit: int = len(str(repo_count))
@@ -26,7 +29,7 @@ def download_with_requests(
         else:
             shutil.rmtree(repo_path)
             print(f"[{i:>{count_digit}}/{repo_count}] Updating '{repo_path}'...")
-        response: requests.Response = requests.get(
+        response: requests.Response = session.get(
             tarball_url, headers=headers, timeout=30
         )
         response.raise_for_status()
@@ -67,13 +70,13 @@ def download_with_git(
 
 
 def github_get_all(
-    endpoint: str, headers: dict[str, str] | None
+    session: requests.Session, endpoint: str, headers: dict[str, str] | None
 ) -> list[Repository] | list[Organization]:
     items: list[Repository] | list[Organization] = []
     page = 1
 
     while True:
-        response: requests.Response = requests.get(
+        response: requests.Response = session.get(
             endpoint, headers=headers, params={"per_page": 100, "page": page}
         )
         response.raise_for_status()
@@ -86,24 +89,26 @@ def github_get_all(
     return items
 
 
-def get_repositories(username: str, headers: dict[str, str] | None) -> list[Repository]:
+def get_repositories(
+    session: requests.Session, username: str, headers: dict[str, str] | None
+) -> list[Repository]:
     if not headers:
         endpoint = f"https://api.github.com/users/{username}/repos"
     else:
         endpoint = "https://api.github.com/user/repos"
 
-    return github_get_all(endpoint, headers)
+    return github_get_all(session, endpoint, headers)
 
 
 def get_organizations(
-    username: str, headers: dict[str, str] | None
+    session: requests.Session, username: str, headers: dict[str, str] | None
 ) -> list[Organization]:
     if not headers:
         endpoint = f"https://api.github.com/users/{username}/orgs"
     else:
         endpoint = "https://api.github.com/user/orgs"
 
-    return github_get_all(endpoint, headers)
+    return github_get_all(session, endpoint, headers)
 
 
 def filter_repositories(
@@ -131,17 +136,18 @@ def download_repositories(
     filters: FiltersConfig,
     directory: Path,
 ) -> None:
-    headers: dict[str, str] | None = (
-        {"Authorization": f"token {token}"} if token else None
-    )
-    repos: list[Repository] = get_repositories(username, headers)
-    orgs: list[Organization] = get_organizations(username, headers)
-    org_names: list[str] = [org["login"] for org in orgs]
-    filtered_repos: list[Repository] = filter_repositories(
-        repos, username, org_names, filters
-    )
+    with requests.Session() as session:
+        headers: dict[str, str] | None = (
+            {"Authorization": f"token {token}"} if token else None
+        )
+        repos: list[Repository] = get_repositories(session, username, headers)
+        orgs: list[Organization] = get_organizations(session, username, headers)
+        org_names: list[str] = [org["login"] for org in orgs]
+        filtered_repos: list[Repository] = filter_repositories(
+            repos, username, org_names, filters
+        )
 
-    if git_enabled:
-        download_with_git(filtered_repos, git_args, directory)
-    else:
-        download_with_requests(filtered_repos, headers, directory)
+        if git_enabled:
+            download_with_git(filtered_repos, git_args, directory)
+        else:
+            download_with_requests(session, filtered_repos, headers, directory)
